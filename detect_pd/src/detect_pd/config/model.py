@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Literal
 
-from pydantic import Field, root_validator
+from pydantic import Field, model_validator
 
 from .base import BaseConfig
 
@@ -30,12 +30,12 @@ class ModelDefinition(BaseConfig):
         None, description="Primary evaluation metric used during training/validation."
     )
 
-    @root_validator
-    def _validate_early_stopping(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        model_type = values.get("model_type")
-        early_stopping = values.get("early_stopping_rounds")
-        if early_stopping is not None and model_type != "xgboost":
-            raise ValueError("early_stopping_rounds is only supported for XGBoost models.")
+    @model_validator(mode="after")
+    def _validate_early_stopping(cls, values: "ModelDefinition") -> "ModelDefinition":
+        if values.early_stopping_rounds is not None and values.model_type != "xgboost":
+            raise ValueError(
+                "early_stopping_rounds is only supported for XGBoost models."
+            )
         return values
 
 
