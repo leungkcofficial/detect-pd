@@ -1,0 +1,59 @@
+# Core ML and Data Processing
+pandas>=1.5.0
+numpy>=1.21.0
+scikit-learn>=1.1.0
+xgboost>=1.6.0
+
+# MLOps Pipeline
+zenml>=0.40.0
+mlflow>=2.0.0
+
+# Statistical Analysis
+scipy>=1.9.0
+statsmodels>=0.13.0
+
+# Feature Engineering
+joblib>=1.2.0
+
+# Data Visualization (for evaluation plots)
+matplotlib>=3.5.0
+seaborn>=0.11.0
+plotly>=5.0.0
+
+# Excel Data Processing
+openpyxl>=3.0.0
+xlrd>=2.0.0
+
+# Model Persistence
+pickle-mixin>=1.0.0
+
+# Configuration Management
+pydantic>=1.9.0
+pyyaml>=6.0
+
+# Logging and Monitoring
+python-dotenv>=0.19.0
+
+# Development and Testing
+pytest>=7.0.0
+black>=22.0.0
+flake8>=4.0.0
+mypy>=0.971
+
+# Jupyter Notebook Support
+jupyter>=1.0.0
+ipython>=8.0.0
+
+# Medical/Clinical Calculations
+lifelines>=0.27.0  # For survival analysis if needed
+
+# HTTP serving (future model deployment)
+fastapi>=0.75.0
+uvicorn>=0.17.0
+
+# Container support
+docker>=5.0.0
+
+# Additional utilities
+tqdm>=4.64.0
+click>=8.0.0
