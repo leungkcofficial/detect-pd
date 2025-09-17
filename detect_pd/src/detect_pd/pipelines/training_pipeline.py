@@ -12,18 +12,19 @@ from detect_pd.config import (
 )
 from detect_pd.steps import (
     ModelTrainingInput,
+    ModelTrainingResults,
     SplitOutput,
     data_ingestion_step,
     feature_selection_step,
+    model_training_step,
     prepare_training_input_step,
     preprocessing_step,
     split_step,
 )
-from detect_pd.steps.model_training import model_training_step
 
 
 @pipeline
-def training_pipeline(config: PipelineConfig) -> ModelTrainingInput:
+def training_pipeline(config: PipelineConfig) -> ModelTrainingResults:
     """Full pipeline that prepares model training inputs."""
 
     # Ingestion
@@ -48,6 +49,10 @@ def training_pipeline(config: PipelineConfig) -> ModelTrainingInput:
     )
 
     # Model training stage (currently delegated to dedicated step module)
-    model_training_step(training_input=training_input, split_output=split_output)
+    training_results = model_training_step(
+        training_input=training_input,
+        split_output=split_output,
+        config=config.model_training,
+    )
 
-    return training_input
+    return training_results

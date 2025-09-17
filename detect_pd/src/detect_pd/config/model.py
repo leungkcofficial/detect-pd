@@ -1,7 +1,7 @@
 """Configuration schema for model training."""
 from __future__ import annotations
 
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import Field, model_validator
 
@@ -11,7 +11,17 @@ from .base import BaseConfig
 class ModelDefinition(BaseConfig):
     """Describes a single model instance to be trained."""
 
-    model_type: Literal["xgboost", "random_forest", "linear_regression"] = Field(
+    model_type: Literal[
+        "elastic_net",
+        "xgboost",
+        "lightgbm",
+        "catboost",
+        "random_forest",
+        "linear_regression",
+        "ngboost",
+        "quantile_lightgbm",
+        "stacked",
+    ] = Field(
         ..., description="Which algorithm to train."
     )
     hyperparameters: Dict[str, Any] = Field(
@@ -29,12 +39,28 @@ class ModelDefinition(BaseConfig):
     eval_metric: str | None = Field(
         None, description="Primary evaluation metric used during training/validation."
     )
+    monotone_constraints: Optional[List[int]] = Field(
+        default=None,
+        description="Monotonicity constraints passed to compatible models (LightGBM/XGBoost).",
+    )
+    distribution: Optional[str] = Field(
+        default=None,
+        description="Distribution identifier for probabilistic models such as NGBoost.",
+    )
+    quantiles: Optional[List[float]] = Field(
+        default=None,
+        description="Quantile values to fit for quantile regression models (LightGBM).",
+    )
+    base_models: Optional[List["ModelDefinition"]] = Field(
+        default=None,
+        description="Base learner definitions when configuring a stacked ensemble.",
+    )
 
     @model_validator(mode="after")
     def _validate_early_stopping(cls, values: "ModelDefinition") -> "ModelDefinition":
-        if values.early_stopping_rounds is not None and values.model_type != "xgboost":
+        if values.early_stopping_rounds is not None and values.model_type not in {"xgboost", "lightgbm"}:
             raise ValueError(
-                "early_stopping_rounds is only supported for XGBoost models."
+                "early_stopping_rounds is only supported for XGBoost/LightGBM models."
             )
         return values
 
@@ -63,3 +89,8 @@ class ModelTrainingConfig(BaseConfig):
     persist_models: bool = Field(
         True, description="Whether to persist trained model artefacts to disk/MLflow." 
     )
+
+
+ModelDefinition.model_rebuild()
+TargetModelCollection.model_rebuild()
+ModelTrainingConfig.model_rebuild()

@@ -14,7 +14,7 @@ from .feature_selection import (
     run_feature_selection,
 )
 from .training_input import ModelTrainingInput, prepare_training_input_step
-from .model_training import model_training_step
+from .model_training import ModelTrainingResults, model_training_step, train_models
 from .split import SplitOutput, perform_split, split_step
 
 __all__ = [
@@ -28,6 +28,9 @@ __all__ = [
     "FeatureSelectionResult",
     "ModelTrainingInput",
     "prepare_training_input_step",
+    "ModelTrainingResults",
+    "model_training_step",
+    "train_models",
     "model_training_step",
     "split_step",
     "perform_split",
