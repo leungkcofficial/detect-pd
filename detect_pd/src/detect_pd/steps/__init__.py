@@ -7,6 +7,12 @@ from .preprocessing import (
     preprocess_dataset,
     preprocessing_step,
 )
+from .feature_selection import (
+    FeatureSelectionOutput,
+    FeatureSelectionResult,
+    feature_selection_step,
+    run_feature_selection,
+)
 from .split import SplitOutput, perform_split, split_step
 
 __all__ = [
@@ -14,6 +20,10 @@ __all__ = [
     "ingest_data_frame",
     "preprocess_dataset",
     "preprocessing_step",
+    "feature_selection_step",
+    "run_feature_selection",
+    "FeatureSelectionOutput",
+    "FeatureSelectionResult",
     "split_step",
     "perform_split",
     "SplitOutput",

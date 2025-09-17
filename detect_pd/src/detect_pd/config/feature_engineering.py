@@ -11,6 +11,9 @@ from .base import BaseConfig
 class FeatureSelectionTargetConfig(BaseConfig):
     """Configuration for an individual LASSO feature selection target."""
 
+    target_name: str | None = Field(
+        None, description="Name of the target column to use for this configuration."
+    )
     problem_type: Literal["binary", "regression"] = Field(
         "regression", description="Treat target as regression or binary classification."
     )
