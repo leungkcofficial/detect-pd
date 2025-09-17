@@ -1,6 +1,7 @@
 """Utility modules for the DETECT-PD project."""
 
 from .clinical import (
+    CCI_BASE_WEIGHTS,
     CharlsonConfig,
     compute_bmi,
     compute_bsa_du_bois,
@@ -20,4 +21,5 @@ __all__ = [
     "flatten_multiindex_columns",
     "parse_dates",
     "rename_and_select_columns",
+    "CCI_BASE_WEIGHTS",
 ]
