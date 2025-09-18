@@ -1,42 +1,35 @@
 """Base configuration utilities for the DETECT-PD project."""
-from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Dict, Type, TypeVar
 
 import yaml
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 _T = TypeVar("_T", bound="BaseConfig")
 
 
 class BaseConfig(BaseModel):
-    """Base configuration class for all pipeline configs.
-
-    Provides common settings such as random seed and logging level, and helper
-    methods for loading configuration objects from YAML files. Environment
-    variable based overrides can be added in later iterations if needed.
-    """
+    """Base configuration class for all pipeline configs."""
 
     random_seed: int = Field(42, description="Random seed used across pipeline components.")
     logging_level: str = Field(
         "INFO", description="Python logging level for the component using this config."
     )
 
-    class Config:
-        extra = "forbid"
-        allow_mutation = False
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+        protected_namespaces=(),
+    )
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def _normalize_keys(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        """Normalise incoming keys to snake_case.
-
-        YAML config files may contain hyphenated keys; convert them to snake_case
-        so that Pydantic field validation works as expected.
-        """
+        """Normalise incoming keys to snake_case for YAML compatibility."""
 
         normalized: Dict[str, Any] = {}
-        for key, value in values.items():
+        for key, value in (values or {}).items():
             snake_key = key.replace("-", "_")
             normalized[snake_key] = value
         return normalized
@@ -48,25 +41,16 @@ class BaseConfig(BaseModel):
         path = Path(path)
         with path.open("r", encoding="utf-8") as fp:
             data = yaml.safe_load(fp) or {}
-        return cls.parse_obj(data)
+        return cls.model_validate(data)
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a serialisable representation of the config."""
 
-        return self.dict()
+        return self.model_dump()
 
 
 def load_configs_from_directory(directory: Path | str, registry: Dict[str, Type[BaseConfig]]) -> Dict[str, BaseConfig]:
-    """Load multiple configuration objects from a directory of YAML files.
-
-    Args:
-        directory: Directory containing configuration YAML files.
-        registry: Mapping of stem names to configuration classes. Each file's
-            stem (without extension) must exist in the registry.
-
-    Returns:
-        Dict mapping the same keys as the registry to instantiated config objects.
-    """
+    """Load multiple configuration objects from a directory of YAML files."""
 
     directory = Path(directory)
     configs: Dict[str, BaseConfig] = {}

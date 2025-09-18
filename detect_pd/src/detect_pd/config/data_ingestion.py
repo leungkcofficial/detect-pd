@@ -1,10 +1,9 @@
 """Configuration models for data ingestion and validation."""
-from __future__ import annotations
 
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 
 from .base import BaseConfig
 
@@ -51,18 +50,24 @@ class DataIngestionConfig(BaseConfig):
         description="Drop rows where outcome variables are missing to enforce complete-case analysis.",
     )
 
-    @validator("sheet_name")
+    @field_validator("sheet_name")
+    @classmethod
     def _strip_sheet_name(cls, value: str) -> str:
         return value.strip()
 
-    @validator("required_columns", "date_columns", "drop_columns", pre=True)
+    @field_validator("required_columns", "date_columns", "drop_columns", mode="before")
+    @classmethod
     def _normalise_columns(cls, value: Optional[List[str]]) -> List[str]:
         if not value:
             return []
         return [column.strip() for column in value]
 
-    @validator("column_renames", pre=True)
+    @field_validator("column_renames", mode="before")
+    @classmethod
     def _strip_rename_keys(cls, value: Optional[Dict[str, str]]) -> Dict[str, str]:
         if not value:
             return {}
         return {key.strip(): val.strip() for key, val in value.items()}
+
+
+DataIngestionConfig.model_rebuild()
