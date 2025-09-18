@@ -1,15 +1,13 @@
-"""ZenML pipeline wiring data ingestion through feature selection."""
-from __future__ import annotations
+"""ZenML pipeline entry point for DETECT-PD."""
 
+import argparse
+from pathlib import Path
+from typing import Optional
+
+import yaml
 from zenml import pipeline
 
-from detect_pd.config import (
-    DataIngestionConfig,
-    FeatureEngineeringConfig,
-    PipelineConfig,
-    PreprocessingConfig,
-    SplitConfig,
-)
+from detect_pd.config.pipeline import PipelineConfig
 from detect_pd.steps import (
     EvaluationSummary,
     ModelTrainingInput,
@@ -66,3 +64,35 @@ def training_pipeline(config: PipelineConfig) -> EvaluationSummary:
     )
 
     return evaluation_summary
+
+
+def load_pipeline_config(path: Path) -> PipelineConfig:
+    with path.open("r", encoding="utf-8") as fp:
+        data = yaml.safe_load(fp)
+    return PipelineConfig.parse_obj(data)
+
+
+def run_pipeline(config: PipelineConfig) -> None:
+    pipeline_instance = training_pipeline(config=config)
+    pipeline_instance.run()
+
+
+def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run the DETECT-PD training pipeline.")
+    parser.add_argument(
+        "--config",
+        required=True,
+        help="Path to the pipeline YAML/JSON configuration file.",
+    )
+    return parser.parse_args(args=args)
+
+
+def main(argv: Optional[list[str]] = None) -> None:
+    parsed_args = parse_args(argv)
+    config_path = Path(parsed_args.config)
+    config = load_pipeline_config(config_path)
+    run_pipeline(config)
+
+
+if __name__ == "__main__":
+    main()
