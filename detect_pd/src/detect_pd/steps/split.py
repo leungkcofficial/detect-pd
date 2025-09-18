@@ -47,3 +47,24 @@ def split_step(data: pd.DataFrame, config: SplitConfig) -> SplitOutput:
     """ZenML step to partition the dataset into train/test subsets."""
 
     return perform_split(data, config)
+
+
+@step
+def get_train_data(split_output: SplitOutput) -> pd.DataFrame:
+    """Return the training subset from a split output."""
+
+    return split_output.train
+
+
+@step
+def get_test_data(split_output: SplitOutput) -> pd.DataFrame:
+    """Return the test subset from a split output."""
+
+    return split_output.test
+
+
+@step
+def get_test_indices(split_output: SplitOutput) -> List[str]:
+    """Return the held-out indices from a split output."""
+
+    return split_output.test_indices

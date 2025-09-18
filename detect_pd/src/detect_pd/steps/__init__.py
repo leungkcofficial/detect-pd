@@ -17,7 +17,14 @@ from .feature_selection import (
 from .evaluation import EvaluationSummary, evaluation_step, evaluate_models
 from .training_input import ModelTrainingInput, prepare_training_input_step
 from .model_training import ModelTrainingResults, model_training_step, train_models
-from .split import SplitOutput, perform_split, split_step
+from .split import (
+    SplitOutput,
+    get_test_data,
+    get_test_indices,
+    get_train_data,
+    perform_split,
+    split_step,
+)
 
 __all__ = [
     "data_ingestion_step",
@@ -39,6 +46,9 @@ __all__ = [
     "split_step",
     "perform_split",
     "SplitOutput",
+    "get_train_data",
+    "get_test_data",
+    "get_test_indices",
     "PreprocessingArtifacts",
     "PreprocessingOutput",
     "apply_preprocessing_to_new_data",

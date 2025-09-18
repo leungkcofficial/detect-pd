@@ -1,6 +1,4 @@
 """Tests for the evaluation helper."""
-from __future__ import annotations
-
 from pathlib import Path
 
 import pandas as pd
@@ -15,7 +13,6 @@ from detect_pd.steps.model_training import (
     TargetTrainingResult,
 )
 from detect_pd.steps.preprocessing import PreprocessingArtifacts
-from detect_pd.steps.split import SplitOutput
 from detect_pd.steps.training_input import ModelTrainingInput
 
 
@@ -54,16 +51,12 @@ def build_training_results() -> ModelTrainingResults:
     return ModelTrainingResults(targets={"ktv": target_result})
 
 
-def build_split_output() -> SplitOutput:
-    train = pd.DataFrame({"signal": [0.0, 1.0], "ktv": [0.0, 2.0]})
-    test = pd.DataFrame({"signal": [4.0, 5.0], "ktv": [8.0, 10.0]})
-    return SplitOutput(train=train, test=test, test_indices=["A", "B"])
+test_dataset = pd.DataFrame({"signal": [4.0, 5.0], "ktv": [8.0, 10.0]})
 
 
 def test_evaluate_models_produces_metrics(tmp_path: Path):
     training_input = build_training_input()
     training_results = build_training_results()
-    split_output = build_split_output()
 
     preprocessing_config = PreprocessingConfig(
         target_columns=["ktv"],
@@ -74,7 +67,7 @@ def test_evaluate_models_produces_metrics(tmp_path: Path):
     summary: EvaluationSummary = evaluate_models(
         training_results=training_results,
         training_input=training_input,
-        split_output=split_output,
+        test_data=test_dataset,
         preprocessing_config=preprocessing_config,
         config=eval_config,
     )

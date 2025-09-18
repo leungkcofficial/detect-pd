@@ -14,7 +14,6 @@ from zenml import step
 from detect_pd.config import EvaluationConfig, PreprocessingConfig
 from detect_pd.steps.model_training import ModelTrainingResults
 from detect_pd.steps.preprocessing import apply_preprocessing_to_new_data
-from detect_pd.steps.split import SplitOutput
 from detect_pd.steps.training_input import ModelTrainingInput
 
 logger = logging.getLogger(__name__)
@@ -91,16 +90,15 @@ def _plot_calibration(
 def evaluate_models(
     training_results: ModelTrainingResults,
     training_input: ModelTrainingInput,
-    split_output: SplitOutput,
+    test_data: pd.DataFrame,
     preprocessing_config: PreprocessingConfig,
     config: EvaluationConfig,
 ) -> EvaluationSummary:
     output_dir = Path(config.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    test_data = split_output.test.copy()
     processed_features, processed_targets = apply_preprocessing_to_new_data(
-        test_data,
+        test_data.copy(),
         preprocessing_config,
         training_input.artifacts,
     )
@@ -186,7 +184,7 @@ def evaluate_models(
 def evaluation_step(
     training_results: ModelTrainingResults,
     training_input: ModelTrainingInput,
-    split_output: SplitOutput,
+    test_data: pd.DataFrame,
     preprocessing_config: PreprocessingConfig,
     config: EvaluationConfig,
 ) -> EvaluationSummary:
@@ -195,7 +193,7 @@ def evaluation_step(
     summary = evaluate_models(
         training_results=training_results,
         training_input=training_input,
-        split_output=split_output,
+        test_data=test_data,
         preprocessing_config=preprocessing_config,
         config=config,
     )

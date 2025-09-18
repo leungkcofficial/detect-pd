@@ -13,7 +13,6 @@ from sklearn.model_selection import RandomizedSearchCV
 from zenml import step
 
 from detect_pd.config import ModelDefinition, ModelTrainingConfig
-from detect_pd.steps.split import SplitOutput
 from detect_pd.steps.training_input import ModelTrainingInput
 
 logger = logging.getLogger(__name__)
@@ -330,12 +329,10 @@ def train_models(
 @step
 def model_training_step(
     training_input: ModelTrainingInput,
-    split_output: SplitOutput,
     config: ModelTrainingConfig,
 ) -> ModelTrainingResults:
     """Train all configured models for each target and return metrics."""
 
-    del split_output  # placeholder until evaluation incorporates test set
     training_results = train_models(training_input, config)
     logger.info("Completed training for targets: %s", list(training_results.targets.keys()))
     return training_results
