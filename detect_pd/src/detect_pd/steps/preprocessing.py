@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -239,3 +239,54 @@ def preprocessing_step(
     output = preprocess_dataset(data, config)
     logger.info("Preprocessed dataset with %d features", output.features.shape[1])
     return output
+
+
+def apply_preprocessing_to_new_data(
+    data: pd.DataFrame,
+    config: PreprocessingConfig,
+    artifacts: PreprocessingArtifacts,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Apply fitted preprocessing artifacts to new data."""
+
+    df = data.copy()
+    df = _derive_body_metrics(df, config)
+    df = _derive_time_metrics(df, config)
+    df["charlson_index"] = _compute_cci(df, config)
+    df = _apply_log_transform(df, config.log_transform_features)
+
+    features, targets = _split_features_targets(df, config.target_columns)
+
+    # Ensure numeric columns exist and apply imputer/scaler
+    for column in artifacts.numeric_columns:
+        if column not in features.columns:
+            features[column] = np.nan
+
+    numeric_columns = [col for col in artifacts.numeric_columns if col in features.columns]
+    if artifacts.imputer is not None and numeric_columns:
+        features.loc[:, numeric_columns] = artifacts.imputer.transform(features[numeric_columns])
+    if artifacts.scaler is not None and numeric_columns:
+        features.loc[:, numeric_columns] = artifacts.scaler.transform(features[numeric_columns])
+
+    categorical_columns = [col for col in artifacts.original_categorical_columns if col in features.columns]
+    if artifacts.encoder is not None and categorical_columns:
+        if hasattr(artifacts.encoder, "transform"):
+            transformed = artifacts.encoder.transform(features[categorical_columns].fillna("missing"))
+            encoded_df = pd.DataFrame(
+                transformed,
+                index=features.index,
+                columns=artifacts.encoded_categorical_columns,
+            )
+            features = pd.concat([features.drop(columns=categorical_columns), encoded_df], axis=1)
+        elif isinstance(artifacts.encoder, dict):
+            for column, encoder in artifacts.encoder.items():
+                if column in features.columns:
+                    features[column] = encoder.transform(features[column].astype(str).fillna("missing"))
+    else:
+        features = features.drop(columns=categorical_columns, errors="ignore")
+
+    for column in artifacts.feature_columns:
+        if column not in features.columns:
+            features[column] = 0.0
+
+    features = features[artifacts.feature_columns]
+    return features, targets

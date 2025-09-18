@@ -11,10 +11,12 @@ from detect_pd.config import (
     SplitConfig,
 )
 from detect_pd.steps import (
+    EvaluationSummary,
     ModelTrainingInput,
     ModelTrainingResults,
     SplitOutput,
     data_ingestion_step,
+    evaluation_step,
     feature_selection_step,
     model_training_step,
     prepare_training_input_step,
@@ -24,8 +26,8 @@ from detect_pd.steps import (
 
 
 @pipeline
-def training_pipeline(config: PipelineConfig) -> ModelTrainingResults:
-    """Full pipeline that prepares model training inputs."""
+def training_pipeline(config: PipelineConfig) -> EvaluationSummary:
+    """Full pipeline that trains models and evaluates them on the test set."""
 
     # Ingestion
     raw_data = data_ingestion_step(config=config.data_ingestion)
@@ -55,4 +57,12 @@ def training_pipeline(config: PipelineConfig) -> ModelTrainingResults:
         config=config.model_training,
     )
 
-    return training_results
+    evaluation_summary = evaluation_step(
+        training_results=training_results,
+        training_input=training_input,
+        split_output=split_output,
+        preprocessing_config=config.preprocessing,
+        config=config.evaluation,
+    )
+
+    return evaluation_summary

@@ -3,13 +3,14 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor, StackingRegressor
 from sklearn.linear_model import ElasticNet, LinearRegression, Ridge
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.model_selection import RandomizedSearchCV
 from zenml import step
 
 from detect_pd.config import ModelDefinition, ModelTrainingConfig
@@ -59,6 +60,34 @@ def _apply_monotone_constraints(params: Dict[str, Any], constraints: List[int], 
     elif framework == "lightgbm":
         params["monotone_constraints"] = constraints
     return params
+
+
+def _fit_with_random_search(
+    estimator: Any,
+    search_space: Dict[str, Any],
+    X: pd.DataFrame,
+    y: pd.Series,
+    cv_folds: int,
+    scoring: str,
+    config: ModelTrainingConfig,
+):
+    if not search_space:
+        estimator.fit(X, y)
+        return estimator, {}, None, None
+
+    search = RandomizedSearchCV(
+        estimator=estimator,
+        param_distributions=search_space,
+        n_iter=config.random_search_iterations,
+        cv=cv_folds,
+        scoring=scoring,
+        random_state=config.random_state,
+        n_jobs=config.n_jobs,
+        refit=True,
+        verbose=0,
+    )
+    search.fit(X, y)
+    return search.best_estimator_, search.best_params_, search.best_score_, search.cv_results_
 
 
 def _instantiate_estimator(model_def: ModelDefinition, feature_columns: List[str]) -> Tuple[Any, Dict[str, Any]]:
@@ -177,30 +206,106 @@ def train_models(
 
         for model_def in target_config.models:
             estimator, extras = _instantiate_estimator(model_def, list(features.columns))
+            scoring = model_def.eval_metric or config.scoring
+            cv_folds = model_def.cross_validation_folds or config.cv_folds
+            search_space = model_def.search_space or {}
 
-            # Fit estimator
             if isinstance(estimator, dict):
-                # Quantile LightGBM case
                 quantile_predictions: Dict[float, np.ndarray] = {}
-                for q, q_model in estimator.items():
-                    q_model.fit(X, y)
-                    quantile_predictions[q] = q_model.predict(X)
-                median_quantile = extras.get("quantiles", [0.5])
-                median_q = min(median_quantile, key=lambda val: abs(val - 0.5))
+                quantile_best_params: Dict[str, Dict[str, Any]] = {}
+                quantile_best_scores: Dict[str, float] = {}
+                tuned_estimators: Dict[float, Any] = {}
+                for q, q_estimator in estimator.items():
+                    tuned_estimator, best_params, best_score, _ = _fit_with_random_search(
+                        q_estimator,
+                        search_space,
+                        X,
+                        y,
+                        cv_folds,
+                        scoring,
+                        config,
+                    )
+                    tuned_estimators[q] = tuned_estimator
+                    quantile_predictions[q] = tuned_estimator.predict(X)
+                    if best_params:
+                        quantile_best_params[str(q)] = best_params
+                    if best_score is not None:
+                        quantile_best_scores[str(q)] = best_score
+                median_q = min(tuned_estimators.keys(), key=lambda val: abs(val - 0.5))
                 y_pred = quantile_predictions[median_q]
-                extras["quantile_predictions"] = {str(q): preds.tolist() for q, preds in quantile_predictions.items()}
-                fitted_estimator = {q: q_model for q, q_model in estimator.items()}
+                extras.setdefault("quantiles", list(tuned_estimators.keys()))
+                extras["best_params"] = quantile_best_params
+                extras["best_score"] = quantile_best_scores
+                extras["train_quantile_predictions"] = {
+                    str(q): preds.tolist() for q, preds in quantile_predictions.items()
+                }
+                fitted_estimator = tuned_estimators
+            elif model_def.model_type == "stacked":
+                base_defs = model_def.base_models or []
+                if not base_defs:
+                    raise ValueError("Stacked model requires base_models definitions.")
+                tuned_base_estimators = []
+                base_infos = []
+                for idx, base_def in enumerate(base_defs):
+                    base_estimator, _ = _instantiate_estimator(base_def, list(features.columns))
+                    base_scoring = base_def.eval_metric or scoring
+                    tuned_base, base_params, base_score, _ = _fit_with_random_search(
+                        base_estimator,
+                        base_def.search_space or {},
+                        X,
+                        y,
+                        base_def.cross_validation_folds or cv_folds,
+                        base_scoring,
+                        config,
+                    )
+                    base_name = f"{base_def.model_type}_{idx}"
+                    tuned_base_estimators.append((base_name, tuned_base))
+                    base_infos.append({
+                        "name": base_name,
+                        "best_params": base_params,
+                        "best_score": base_score,
+                    })
+                stacking = StackingRegressor(estimators=tuned_base_estimators, final_estimator=Ridge())
+                tuned_stack, best_params, best_score, cv_results = _fit_with_random_search(
+                    stacking,
+                    search_space,
+                    X,
+                    y,
+                    cv_folds,
+                    scoring,
+                    config,
+                )
+                fitted_estimator = tuned_stack
+                y_pred = tuned_stack.predict(X)
+                extras["base_models"] = base_infos
+                extras["best_params"] = best_params
+                extras["best_score"] = best_score
+                if cv_results is not None:
+                    extras["cv_results"] = cv_results
             else:
-                estimator.fit(X, y)
-                y_pred = estimator.predict(X)
-                fitted_estimator = estimator
-                if model_def.model_type == "ngboost":
+                tuned_estimator, best_params, best_score, cv_results = _fit_with_random_search(
+                    estimator,
+                    search_space,
+                    X,
+                    y,
+                    cv_folds,
+                    scoring,
+                    config,
+                )
+                y_pred = tuned_estimator.predict(X)
+                fitted_estimator = tuned_estimator
+                extras["best_params"] = best_params
+                extras["best_score"] = best_score
+                if cv_results is not None:
+                    extras["cv_results"] = cv_results
+                if model_def.model_type == "ngboost" and hasattr(tuned_estimator, "pred_dist"):
                     try:
-                        extras["predicted_std"] = estimator.pred_dist(X).scale.tolist()
+                        extras["predicted_std"] = tuned_estimator.pred_dist(X).scale.tolist()
                     except AttributeError:  # pragma: no cover
                         pass
 
             metrics = _compute_metrics(y, y_pred)
+            extras["train_predictions"] = y_pred.tolist()
             model_results.append(
                 ModelResult(
                     name=model_def.model_type,

@@ -39,6 +39,10 @@ class ModelDefinition(BaseConfig):
     eval_metric: str | None = Field(
         None, description="Primary evaluation metric used during training/validation."
     )
+    search_space: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Randomized search parameter distributions keyed by hyperparameter name.",
+    )
     monotone_constraints: Optional[List[int]] = Field(
         default=None,
         description="Monotonicity constraints passed to compatible models (LightGBM/XGBoost).",
@@ -88,6 +92,18 @@ class ModelTrainingConfig(BaseConfig):
     )
     persist_models: bool = Field(
         True, description="Whether to persist trained model artefacts to disk/MLflow." 
+    )
+    random_search_iterations: int = Field(
+        20, ge=1, description="Number of parameter samples evaluated during randomized search."
+    )
+    cv_folds: int = Field(
+        5, ge=2, description="Number of folds used for cross-validation during hyperparameter tuning."
+    )
+    scoring: str = Field(
+        "r2", description="Scikit-learn scoring identifier used during hyperparameter tuning."
+    )
+    random_state: int = Field(
+        42, description="Random seed applied to randomized searches and model initialisation where supported."
     )
 
 
