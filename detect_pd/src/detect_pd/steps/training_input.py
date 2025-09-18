@@ -1,5 +1,4 @@
 """Utilities to prepare model training inputs from selected features."""
-from __future__ import annotations
 
 import logging
 from dataclasses import dataclass

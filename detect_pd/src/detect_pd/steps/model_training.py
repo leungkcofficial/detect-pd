@@ -1,5 +1,4 @@
 """Model training step for DETECT-PD."""
-from __future__ import annotations
 
 import logging
 from dataclasses import dataclass

@@ -1,5 +1,4 @@
 """Data ingestion step for the DETECT-PD pipeline."""
-from __future__ import annotations
 
 import logging
 from typing import Iterable

@@ -1,5 +1,4 @@
 """Preprocessing step for DETECT-PD pipeline."""
-from __future__ import annotations
 
 import logging
 from dataclasses import dataclass

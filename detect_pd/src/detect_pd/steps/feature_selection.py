@@ -1,5 +1,4 @@
 """Feature selection step using LASSO with interpretability plots."""
-from __future__ import annotations
 
 import json
 import logging
