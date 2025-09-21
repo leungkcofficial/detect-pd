@@ -1,0 +1,8 @@
+{
+  "name": "detect-pd-frontend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:unit": "node tests/deriveFeatures.test.mjs && node tests/validation.test.mjs"
+  }
+}

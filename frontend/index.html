@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DETECT-PD Calculator</title>
+    <link rel="stylesheet" href="./styles/main.css" />
+  </head>
+  <body>
+    <div class="toast-container" role="status" aria-live="polite"></div>
+    <main>
+      <header>
+        <h1>DETECT-PD Calculator</h1>
+        <p>Clinical decision support for peritoneal dialysis dose and transport predictions</p>
+      </header>
+
+      <section class="card" aria-label="Calculator">
+        <nav class="tab-bar" role="tablist" aria-label="Patient data tabs">
+          <button class="tab-button" id="tab-patient" role="tab" aria-controls="panel-patient" aria-selected="true">Patient &amp; Comorbidities</button>
+          <button class="tab-button" id="tab-regimen" role="tab" aria-controls="panel-regimen" aria-selected="false">Regimen</button>
+          <button class="tab-button" id="tab-labs" role="tab" aria-controls="panel-labs" aria-selected="false">Labs</button>
+        </nav>
+
+        <div id="panel-patient" class="tab-panel active" role="tabpanel" aria-labelledby="tab-patient"></div>
+        <div id="panel-regimen" class="tab-panel" role="tabpanel" aria-labelledby="tab-regimen"></div>
+        <div id="panel-labs" class="tab-panel" role="tabpanel" aria-labelledby="tab-labs"></div>
+
+        <div class="derived-strip" aria-live="polite">
+          <div class="derived-pill" data-derived="bmi">
+            <h4>BMI</h4>
+            <p class="derived-value">–</p>
+          </div>
+          <div class="derived-pill" data-derived="charlson_index">
+            <h4>Charlson Index</h4>
+            <p class="derived-value">–</p>
+          </div>
+          <div class="derived-pill" data-derived="dwell_time_minutes">
+            <h4>Dwell Time (min)</h4>
+            <p class="derived-value">–</p>
+          </div>
+          <div class="derived-pill" data-derived="pdf_osmolarity">
+            <h4>PDF Osmolarity</h4>
+            <p class="derived-value">–</p>
+          </div>
+        </div>
+
+        <div id="validation-summary" class="validation-summary" aria-live="polite"></div>
+
+        <div class="button-row">
+          <button class="primary" id="predict-button" disabled>Predict</button>
+          <button class="secondary" id="reset-button">Reset</button>
+          <button class="secondary" id="download-button" disabled>Download JSON</button>
+        </div>
+      </section>
+
+      <section class="results-grid" aria-live="polite">
+        <article class="card" id="ktv-card" aria-label="Kt/V prediction">
+          <header>
+            <h2>Kt/V</h2>
+          </header>
+          <div class="prediction-value" data-ktv="value">–</div>
+          <div class="interval" data-ktv="interval">Waiting for prediction</div>
+          <p class="helper-text" data-ktv="calibration">Calibration: –</p>
+          <div class="drivers" data-ktv="drivers"></div>
+        </article>
+
+        <article class="card" id="pet-card" aria-label="PET class prediction">
+          <header>
+            <h2>PET Class</h2>
+          </header>
+          <div class="prediction-value" data-pet="class">–</div>
+          <p class="helper-text" data-pet="reliability">Reliability: –</p>
+          <div class="probability-list" data-pet="probabilities"></div>
+          <div class="drivers" data-pet="drivers"></div>
+        </article>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
