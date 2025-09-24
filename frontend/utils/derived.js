@@ -115,18 +115,21 @@ function buildComorbidityCodes(comorbidities = {}) {
 function normalizeLabs(labs = {}, labUnitConfig = {}) {
   const values = {};
   const meta = {};
-  for (const [field, payload] of Object.entries(labs)) {
+  for (const [field, payload] of Object.entries(labs || {})) {
     if (!payload) continue;
-    const expected = labUnitConfig[field]?.expected || payload.unit;
-    const fromUnit = payload.unit || expected;
+    const expectedUnit = (labUnitConfig?.[field]?.expected || payload.unit || '').trim();
+    const fromUnit = (payload.unit || expectedUnit).trim();
     const numericValue = parseMaybeNumber(payload.value);
     if (numericValue == null) {
       values[field] = null;
       continue;
     }
-    const converted = convertLabValue(field, numericValue, fromUnit, expected);
-    values[field] = converted;
-    meta[field] = fromUnit === expected ? null : `${numericValue} ${fromUnit} → ${converted.toFixed(3)} ${expected}`;
+    const converted = convertLabValue(field, numericValue, fromUnit, expectedUnit);
+    const cleanValue = Number.isFinite(converted) ? Number(converted) : numericValue;
+    values[field] = cleanValue;
+    meta[field] = unitsEqual(fromUnit, expectedUnit)
+      ? null
+      : `${formatNumber(numericValue)} ${fromUnit} → ${formatNumber(cleanValue)} ${expectedUnit}`;
   }
   return { values, meta };
 }
@@ -145,6 +148,20 @@ function parseMaybeNumber(value) {
     return null;
   }
   return num;
+}
+
+function formatNumber(value) {
+  if (!Number.isFinite(value)) return String(value);
+  const abs = Math.abs(value);
+  if (abs === 0) return '0';
+  if (abs >= 1000) return value.toFixed(1);
+  if (abs >= 100) return value.toFixed(2);
+  if (abs >= 10) return value.toFixed(2);
+  return value.toFixed(3);
+}
+
+function unitsEqual(a, b) {
+  return (a || '').toLowerCase() === (b || '').toLowerCase();
 }
 
 function generateEphemeralId() {

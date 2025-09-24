@@ -11,12 +11,13 @@ const config = {
     weight: { default: 'kg' },
     labs: {
       pdf_urea: { expected: 'mmol/L' },
-      pdf_creatinine: { expected: 'mg/dL' },
-      pdf_protein: { expected: 'g/dL' },
-      urine_protein_creatinine: { expected: 'ratio' },
-      blood_creatinine: { expected: 'mg/dL' },
-      blood_albumin: { expected: 'g/dL' },
-      blood_protein: { expected: 'g/dL' }
+      pdf_creatinine: { expected: 'umol/L' },
+      pdf_protein: { expected: 'g/L' },
+      urine_protein_creatinine: { expected: 'mg/mmol' },
+      blood_urea: { expected: 'mmol/L' },
+      blood_creatinine: { expected: 'umol/L' },
+      blood_albumin: { expected: 'g/L' },
+      blood_protein: { expected: 'g/L' }
     }
   }
 };
@@ -58,11 +59,12 @@ const state = {
   },
   labs: {
     pdf_urea: { value: 10.2, unit: 'mmol/L' },
-    pdf_creatinine: { value: 9.1, unit: 'mg/dL' },
+    pdf_creatinine: { value: 0.9, unit: 'mg/dL' },
     pdf_protein: { value: 0.15, unit: 'g/dL' },
-    urine_protein_creatinine: { value: 0.8, unit: 'ratio' },
-    blood_creatinine: { value: 650, unit: 'umol/L' },
-    blood_albumin: { value: 36, unit: 'g/L' },
+    urine_protein_creatinine: { value: 12, unit: 'mg/mg' },
+    blood_urea: { value: 25, unit: 'mg/dL' },
+    blood_creatinine: { value: 7.2, unit: 'mg/dL' },
+    blood_albumin: { value: 3.6, unit: 'g/dL' },
     blood_protein: { value: 6.5, unit: 'g/dL' }
   }
 };
@@ -73,7 +75,12 @@ assert.ok(Math.abs(result.bmi - 24.8) < 0.05, `BMI expected ~24.8, received ${re
 assert.equal(result.charlson_index, 6, 'Charlson index should include CHF, DM with complications, renal baseline, age bracket.');
 assert.ok(Math.abs(result.pdf_osmolarity - 366) < 0.2, `Expected osmolarity ~366.6, received ${result.pdf_osmolarity}`);
 assert.equal(result.dwell_time_minutes, 720, 'Expected dwell of 12 hours (720 minutes).');
-assert.ok(Math.abs(result.blood_creatinine - (650 / 88.4)) < 0.01, 'Creatinine conversion from umol/L to mg/dL failed.');
-assert.ok(Math.abs(result.blood_albumin - 3.6) < 0.01, 'Albumin conversion g/L to g/dL failed.');
+assert.ok(Math.abs(result.pdf_creatinine - (0.9 * 88.4)) < 0.01, 'PDF creatinine conversion to umol/L failed.');
+assert.ok(Math.abs(result.pdf_protein - 1.5) < 0.01, 'PDF protein conversion to g/L failed.');
+assert.ok(Math.abs(result.urine_protein_creatinine - (12 * 113.12)) < 0.5, 'Urine protein/creatinine conversion to mg/mmol failed.');
+assert.ok(Math.abs(result.blood_urea - (25 * 0.1665)) < 0.01, 'Blood urea conversion to mmol/L failed.');
+assert.ok(Math.abs(result.blood_creatinine - (7.2 * 88.4)) < 0.05, 'Blood creatinine conversion to umol/L failed.');
+assert.ok(Math.abs(result.blood_albumin - 36) < 0.01, 'Blood albumin conversion to g/L failed.');
+assert.ok(Math.abs(result.blood_protein - 65) < 0.1, 'Blood protein conversion to g/L failed.');
 
 console.log('deriveFeatures tests passed');

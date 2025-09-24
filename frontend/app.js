@@ -25,14 +25,14 @@ const COMORBIDITY_FIELDS = [
 ];
 
 const LAB_FIELDS = [
-  { key: 'pdf_urea', label: 'PDF Urea', helper: 'Expected unit per config.' },
-  { key: 'pdf_creatinine', label: 'PDF Creatinine' },
-  { key: 'pdf_protein', label: 'PDF Protein' },
-  { key: 'urine_protein_creatinine', label: 'Urine Protein/Creatinine Ratio', helper: 'Enter ratio (unitless).' },
-  { key: 'blood_urea', label: 'Blood Urea' },
-  { key: 'blood_creatinine', label: 'Blood Creatinine' },
-  { key: 'blood_albumin', label: 'Blood Albumin' },
-  { key: 'blood_protein', label: 'Blood Total Protein' }
+  { key: 'pdf_urea', label: 'PDF Urea', helper: 'Default mmol/L; converter available for mg/dL.' },
+  { key: 'pdf_creatinine', label: 'PDF Creatinine', helper: 'Default umol/L; converter available for mg/dL.' },
+  { key: 'pdf_protein', label: 'PDF Protein', helper: 'Default g/L; converter available for g/dL.' },
+  { key: 'urine_protein_creatinine', label: 'Urine Protein/Creatinine Ratio', helper: 'Default mg/mmol; mg/mg supported.' },
+  { key: 'blood_urea', label: 'Blood Urea', helper: 'Default mmol/L; converter available for mg/dL.' },
+  { key: 'blood_creatinine', label: 'Blood Creatinine', helper: 'Default umol/L; converter available for mg/dL.' },
+  { key: 'blood_albumin', label: 'Blood Albumin', helper: 'Default g/L; converter available for g/dL.' },
+  { key: 'blood_protein', label: 'Blood Total Protein', helper: 'Default g/L; converter available for g/dL.' }
 ];
 
 const PET_CLASS_LABELS = {
@@ -502,11 +502,14 @@ function updateDerivedChips(derived) {
 
   const ktvCalibration = document.querySelector('[data-ktv="calibration"]');
   if (ktvCalibration) {
-    ktvCalibration.textContent = `Calibration: ${state.config.calibration?.ktv || 'Refer to CatBoost bundle'}`;
+    const ktvNote = state.config.calibration?.ktv;
+    const noteText = typeof ktvNote === 'string' ? ktvNote : ktvNote?.note;
+    ktvCalibration.textContent = `Calibration: ${noteText || 'Refer to CatBoost bundle'}`;
   }
   const petReliability = document.querySelector('[data-pet="reliability"]');
-  if (petReliability) {
-    petReliability.textContent = `Reliability (ECE): ${state.config.calibration?.pet_class_idx || 'Refer to XGBoost report'}`;
+  if (petReliability && !state.prediction) {
+    const petCal = state.config.calibration?.pet_class_idx || {};
+    petReliability.textContent = buildReliabilityText(petCal.ece, petCal.note);
   }
 }
 
@@ -591,35 +594,59 @@ function renderResults(response) {
   }
   const pet = response.pet_class_idx;
   if (pet) {
-    petCard.querySelector('[data-pet="class"]').textContent = typeof pet.pred_class === 'number' ? getPetClassLabel(pet.pred_class) : '–';
-    petCard.querySelector('[data-pet="reliability"]').textContent = `Reliability (ECE): ${formatNumber(pet.ece_bin, { digits: 2 })}`;
-    renderProbabilities(petCard.querySelector('[data-pet="probabilities"]'), pet.probs);
+    const classLabel = typeof pet.pred_class === 'number' ? getPetClassLabel(pet.pred_class) : '–';
+    petCard.querySelector('[data-pet="class"]').textContent = classLabel;
+    const eceValue = Number.isFinite(pet.ece_bin) ? pet.ece_bin : state.config.calibration?.pet_class_idx?.ece;
+    const note = state.config.calibration?.pet_class_idx?.note;
+    petCard.querySelector('[data-pet="reliability"]').textContent = buildReliabilityText(eceValue, note);
+    renderProbabilities(petCard.querySelector('[data-pet="probabilities"]'), pet.probs, pet.top2);
     renderDrivers(petCard.querySelector('[data-pet="drivers"]'), pet.explanation);
   } else {
+    const petCal = state.config.calibration?.pet_class_idx || {};
     petCard.querySelector('[data-pet="class"]').textContent = '–';
-    petCard.querySelector('[data-pet="reliability"]').textContent = 'Reliability: –';
+    petCard.querySelector('[data-pet="reliability"]').textContent = buildReliabilityText(petCal.ece, petCal.note);
     renderProbabilities(petCard.querySelector('[data-pet="probabilities"]'), []);
     renderDrivers(petCard.querySelector('[data-pet="drivers"]'), []);
   }
 }
 
-function renderProbabilities(container, probs = []) {
+function renderProbabilities(container, probs = [], highlights = []) {
   if (!container) return;
   if (!Array.isArray(probs) || probs.length === 0) {
     container.innerHTML = '<p class="helper-text">Probability details appear after prediction.</p>';
     return;
   }
+  const highlightSet = new Set(highlights || []);
   container.innerHTML = probs
-    .map((prob, index) => `
-      <div class="probability-item">
+    .map((prob, index) => {
+      const percent = Math.round(prob * 100);
+      const classes = ['probability-item'];
+      if (highlightSet.has(index)) classes.push('highlight');
+      return `
+      <div class="${classes.join(' ')}">
         <div class="probability-label">
           <span>${getPetClassLabel(index)}</span>
           <span>${formatProbability(prob)}</span>
         </div>
-        <div class="probability-bar"><span style="width:${Math.round(prob * 100)}%"></span></div>
+        <div class="probability-bar"><span style="width:${percent}%"></span></div>
       </div>
-    `)
+    `;
+    })
     .join('');
+}
+
+function buildReliabilityText(ece, note) {
+  const parts = [];
+  if (Number.isFinite(ece)) {
+    parts.push(`ECE ${formatNumber(ece, { digits: 2, fallback: '–' })}`);
+  }
+  if (note) {
+    parts.push(note);
+  }
+  if (parts.length === 0) {
+    return 'Reliability: –';
+  }
+  return `Reliability: ${parts.join(' · ')}`;
 }
 
 function renderDrivers(container, drivers = []) {
@@ -699,7 +726,8 @@ function resetResultCard(ktvCard, petCard) {
   }
   if (petCard) {
     petCard.querySelector('[data-pet="class"]').textContent = '–';
-    petCard.querySelector('[data-pet="reliability"]').textContent = 'Reliability: –';
+    const petCal = state.config?.calibration?.pet_class_idx || {};
+    petCard.querySelector('[data-pet="reliability"]').textContent = buildReliabilityText(petCal.ece, petCal.note);
     renderProbabilities(petCard.querySelector('[data-pet="probabilities"]'), []);
     renderDrivers(petCard.querySelector('[data-pet="drivers"]'), []);
   }

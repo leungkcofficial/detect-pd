@@ -3,6 +3,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test:unit": "node tests/deriveFeatures.test.mjs && node tests/validation.test.mjs"
+    "test:unit": "node tests/deriveFeatures.test.mjs && node tests/validation.test.mjs && node tests/petPredictor.test.mjs"
   }
 }

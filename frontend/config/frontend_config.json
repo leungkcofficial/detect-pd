@@ -1,50 +1,179 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "api": {
     "baseUrl": "http://localhost:8000",
     "predictEndpoint": "/predict",
     "timeoutMs": 5000,
     "useMock": true
   },
+  "models": {
+    "pet_class_idx": {
+      "path": "../models/pet_class_idx_xgboost.json"
+    }
+  },
   "bags": [
-    {"id": "baxter_dianeal_1_5", "brand": "Baxter Dianeal", "concentration": "1.5% glucose", "osm_mOsmL": 346},
-    {"id": "baxter_dianeal_2_5", "brand": "Baxter Dianeal", "concentration": "2.5% glucose", "osm_mOsmL": 396},
-    {"id": "baxter_extraneal_7_5", "brand": "Baxter Extraneal", "concentration": "7.5% icodextrin", "osm_mOsmL": 284},
-    {"id": "fresenius_delflex_1_5", "brand": "Fresenius DelFLEX", "concentration": "1.5% glucose", "osm_mOsmL": 347},
-    {"id": "fresenius_delflex_2_5", "brand": "Fresenius DelFLEX", "concentration": "2.5% glucose", "osm_mOsmL": 398}
+    {
+      "id": "baxter_dianeal_1_5",
+      "brand": "Baxter Dianeal",
+      "concentration": "1.5% glucose",
+      "osm_mOsmL": 346
+    },
+    {
+      "id": "baxter_dianeal_2_5",
+      "brand": "Baxter Dianeal",
+      "concentration": "2.5% glucose",
+      "osm_mOsmL": 396
+    },
+    {
+      "id": "baxter_extraneal_7_5",
+      "brand": "Baxter Extraneal",
+      "concentration": "7.5% icodextrin",
+      "osm_mOsmL": 284
+    },
+    {
+      "id": "fresenius_delflex_1_5",
+      "brand": "Fresenius DelFLEX",
+      "concentration": "1.5% glucose",
+      "osm_mOsmL": 347
+    },
+    {
+      "id": "fresenius_delflex_2_5",
+      "brand": "Fresenius DelFLEX",
+      "concentration": "2.5% glucose",
+      "osm_mOsmL": 398
+    }
   ],
   "units": {
-    "height": {"default": "cm", "options": ["cm", "in"]},
-    "weight": {"default": "kg", "options": ["kg", "lb"]},
+    "height": {
+      "default": "cm",
+      "options": [
+        "cm",
+        "in"
+      ]
+    },
+    "weight": {
+      "default": "kg",
+      "options": [
+        "kg",
+        "lb"
+      ]
+    },
     "labs": {
-      "pdf_urea": {"expected": "mmol/L", "options": ["mmol/L", "mg/dL"]},
-      "pdf_creatinine": {"expected": "umol/L", "options": ["umol/L", "mg/dL"]},
-      "pdf_protein": {"expected": "g/L", "options": ["g/L", "g/dL"]},
-      "urine_protein_creatinine": {"expected": "mg/mmol", "options": ["mg/mmol", "mg/mg", "ratio"]},
-      "blood_urea": {"expected": "mmol/L", "options": ["mmol/L", "mg/dL"]},
-      "blood_creatinine": {"expected": "umol/L", "options": ["umol/L", "mg/dL"]},
-      "blood_albumin": {"expected": "g/L", "options": ["g/L", "g/dL"]},
-      "blood_protein": {"expected": "g/L", "options": ["g/L", "g/dL"]}
+      "pdf_urea": {
+        "expected": "mmol/L",
+        "options": [
+          "mmol/L",
+          "mg/dL"
+        ]
+      },
+      "pdf_creatinine": {
+        "expected": "umol/L",
+        "options": [
+          "umol/L",
+          "mg/dL"
+        ]
+      },
+      "pdf_protein": {
+        "expected": "g/L",
+        "options": [
+          "g/L",
+          "g/dL"
+        ]
+      },
+      "urine_protein_creatinine": {
+        "expected": "mg/mmol",
+        "options": [
+          "mg/mmol",
+          "mg/mg"
+        ]
+      },
+      "blood_urea": {
+        "expected": "mmol/L",
+        "options": [
+          "mmol/L",
+          "mg/dL"
+        ]
+      },
+      "blood_creatinine": {
+        "expected": "umol/L",
+        "options": [
+          "umol/L",
+          "mg/dL"
+        ]
+      },
+      "blood_albumin": {
+        "expected": "g/L",
+        "options": [
+          "g/L",
+          "g/dL"
+        ]
+      },
+      "blood_protein": {
+        "expected": "g/L",
+        "options": [
+          "g/L",
+          "g/dL"
+        ]
+      }
     }
   },
   "guards": {
-    "age": {"min": 18, "max": 110},
-    "height_cm": {"min": 120, "max": 220},
-    "weight_kg": {"min": 30, "max": 200},
+    "age": {
+      "min": 18,
+      "max": 110
+    },
+    "height_cm": {
+      "min": 120,
+      "max": 220
+    },
+    "weight_kg": {
+      "min": 30,
+      "max": 200
+    },
     "labs": {
-      "pdf_urea": {"min": 1, "max": 40},
-      "pdf_creatinine": {"min": 100, "max": 15000},
-      "pdf_protein": {"min": 0.1, "max": 150},
-      "urine_protein_creatinine": {"min": 0, "max": 2000},
-      "blood_urea": {"min": 2, "max": 50},
-      "blood_creatinine": {"min": 50, "max": 2000},
-      "blood_albumin": {"min": 10, "max": 60},
-      "blood_protein": {"min": 20, "max": 100}
+      "pdf_urea": {
+        "min": 5,
+        "max": 50
+      },
+      "pdf_creatinine": {
+        "min": 100,
+        "max": 3000
+      },
+      "pdf_protein": {
+        "min": 0.1,
+        "max": 5
+      },
+      "urine_protein_creatinine": {
+        "min": 0,
+        "max": 7000
+      },
+      "blood_urea": {
+        "min": 3,
+        "max": 50
+      },
+      "blood_creatinine": {
+        "min": 200,
+        "max": 1800
+      },
+      "blood_albumin": {
+        "min": 20,
+        "max": 50
+      },
+      "blood_protein": {
+        "min": 30,
+        "max": 90
+      }
     }
   },
   "calibration": {
-    "ktv": "Model parity target: R² ≈ 0.451; MAE ≈ 0.241",
-    "pet_class_idx": "ECE ≈ 0.39 (mild under-confidence); QWK ≈ 0.325"
+    "ktv": {
+      "note": "Model parity target: R\u00b2 \u2248 0.451; MAE \u2248 0.241"
+    },
+    "pet_class_idx": {
+      "note": "ECE \u2248 0.39 (mild under-confidence); QWK \u2248 0.325",
+      "ece": 0.39,
+      "qwk": 0.325
+    }
   },
   "dwell": {
     "defaultInflow": "20:00",
