@@ -18,12 +18,13 @@
     "weight": {"default": "kg", "options": ["kg", "lb"]},
     "labs": {
       "pdf_urea": {"expected": "mmol/L", "options": ["mmol/L", "mg/dL"]},
-      "pdf_creatinine": {"expected": "mg/dL", "options": ["mg/dL", "umol/L"]},
-      "pdf_protein": {"expected": "g/dL", "options": ["g/dL", "g/L"]},
-      "urine_protein_creatinine": {"expected": "ratio", "options": ["ratio"]},
-      "blood_creatinine": {"expected": "mg/dL", "options": ["mg/dL", "umol/L"]},
-      "blood_albumin": {"expected": "g/dL", "options": ["g/dL", "g/L"]},
-      "blood_protein": {"expected": "g/dL", "options": ["g/dL", "g/L"]}
+      "pdf_creatinine": {"expected": "umol/L", "options": ["umol/L", "mg/dL"]},
+      "pdf_protein": {"expected": "g/L", "options": ["g/L", "g/dL"]},
+      "urine_protein_creatinine": {"expected": "mg/mmol", "options": ["mg/mmol", "mg/mg", "ratio"]},
+      "blood_urea": {"expected": "mmol/L", "options": ["mmol/L", "mg/dL"]},
+      "blood_creatinine": {"expected": "umol/L", "options": ["umol/L", "mg/dL"]},
+      "blood_albumin": {"expected": "g/L", "options": ["g/L", "g/dL"]},
+      "blood_protein": {"expected": "g/L", "options": ["g/L", "g/dL"]}
     }
   },
   "guards": {
@@ -32,12 +33,13 @@
     "weight_kg": {"min": 30, "max": 200},
     "labs": {
       "pdf_urea": {"min": 1, "max": 40},
-      "pdf_creatinine": {"min": 0.1, "max": 15},
-      "pdf_protein": {"min": 0.01, "max": 1.5},
-      "urine_protein_creatinine": {"min": 0, "max": 20},
-      "blood_creatinine": {"min": 0.2, "max": 20},
-      "blood_albumin": {"min": 1, "max": 6},
-      "blood_protein": {"min": 2, "max": 10}
+      "pdf_creatinine": {"min": 100, "max": 15000},
+      "pdf_protein": {"min": 0.1, "max": 150},
+      "urine_protein_creatinine": {"min": 0, "max": 2000},
+      "blood_urea": {"min": 2, "max": 50},
+      "blood_creatinine": {"min": 50, "max": 2000},
+      "blood_albumin": {"min": 10, "max": 60},
+      "blood_protein": {"min": 20, "max": 100}
     }
   },
   "calibration": {

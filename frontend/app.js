@@ -29,10 +29,22 @@ const LAB_FIELDS = [
   { key: 'pdf_creatinine', label: 'PDF Creatinine' },
   { key: 'pdf_protein', label: 'PDF Protein' },
   { key: 'urine_protein_creatinine', label: 'Urine Protein/Creatinine Ratio', helper: 'Enter ratio (unitless).' },
+  { key: 'blood_urea', label: 'Blood Urea' },
   { key: 'blood_creatinine', label: 'Blood Creatinine' },
   { key: 'blood_albumin', label: 'Blood Albumin' },
   { key: 'blood_protein', label: 'Blood Total Protein' }
 ];
+
+const PET_CLASS_LABELS = {
+  0: 'Low',
+  1: 'Low Average', 
+  2: 'High Average',
+  3: 'High'
+};
+
+function getPetClassLabel(classIndex) {
+  return PET_CLASS_LABELS[classIndex] || `Class ${classIndex}`;
+}
 
 const state = {
   config: null,
@@ -579,7 +591,7 @@ function renderResults(response) {
   }
   const pet = response.pet_class_idx;
   if (pet) {
-    petCard.querySelector('[data-pet="class"]').textContent = typeof pet.pred_class === 'number' ? `Class ${pet.pred_class}` : '–';
+    petCard.querySelector('[data-pet="class"]').textContent = typeof pet.pred_class === 'number' ? getPetClassLabel(pet.pred_class) : '–';
     petCard.querySelector('[data-pet="reliability"]').textContent = `Reliability (ECE): ${formatNumber(pet.ece_bin, { digits: 2 })}`;
     renderProbabilities(petCard.querySelector('[data-pet="probabilities"]'), pet.probs);
     renderDrivers(petCard.querySelector('[data-pet="drivers"]'), pet.explanation);
@@ -601,7 +613,7 @@ function renderProbabilities(container, probs = []) {
     .map((prob, index) => `
       <div class="probability-item">
         <div class="probability-label">
-          <span>Class ${index}</span>
+          <span>${getPetClassLabel(index)}</span>
           <span>${formatProbability(prob)}</span>
         </div>
         <div class="probability-bar"><span style="width:${Math.round(prob * 100)}%"></span></div>
